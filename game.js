@@ -245,10 +245,10 @@ function handleGridClick(x, y) {
   
   // Calculate grid positions exactly like drawGameScreen
   const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  const targetOffsetY = 30;
+  const targetOffsetY = 20;
   
   const mainGridX = (canvasWidth - mainGridWidth) / 2;
-  const mainGridY = targetOffsetY + targetGridHeight + 40;
+  const mainGridY = targetOffsetY + targetGridHeight + 25;
   
   // Check if click is in main grid (play area)
   if (x >= mainGridX && x <= mainGridX + mainGridWidth &&
@@ -294,36 +294,36 @@ function handleResize() {
 
 function calculateCellSizes() {
   // Calculate responsive cell sizes based on canvas and grid size
-  // Allocate more space for grids - increased from 60% to 80% of canvas height
-  const availableHeight = canvasHeight * 0.8; // 80% of canvas height for grids
-  const availableWidth = canvasWidth * 0.95; // 95% of canvas width
+  // Use more space for grids - increased from 80% to 90% of canvas height
+  const availableHeight = canvasHeight * 0.9; // 90% of canvas height for grids
+  const availableWidth = canvasWidth * 0.98; // 98% of canvas width
   
   // Calculate space needed for two grids with labels
-  const gridSpacing = 40; // Reduced spacing between grids
-  const labelHeight = 25; // Reduced label height
+  const gridSpacing = 25; // Reduced spacing between grids from 40 to 25
+  const labelHeight = 20; // Reduced label height from 25 to 20
   const totalGridHeight = availableHeight - gridSpacing - (labelHeight * 2);
   
-  // Each grid gets roughly half the available height
-  const maxGridHeight = totalGridHeight / 2;
+  // Allocate more space to play area grid (70%) and less to target grid (30%)
+  const targetGridHeight = totalGridHeight * 0.3; // 30% for target pattern
+  const playGridHeight = totalGridHeight * 0.7; // 70% for play area
   const maxGridWidth = availableWidth;
   
-  // Calculate cell size based on the smaller constraint to maintain square aspect ratio
-  const maxCellSizeByWidth = maxGridWidth / gridSize;
-  const maxCellSizeByHeight = maxGridHeight / gridSize;
+  // Calculate cell sizes for each grid separately
+  const maxTargetCellSizeByWidth = maxGridWidth / gridSize;
+  const maxTargetCellSizeByHeight = targetGridHeight / gridSize;
+  targetCellSize = Math.min(maxTargetCellSizeByWidth, maxTargetCellSizeByHeight);
   
-  // Use the smaller of the two to maintain square cells
-  cellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
+  const maxPlayCellSizeByWidth = maxGridWidth / gridSize;
+  const maxPlayCellSizeByHeight = playGridHeight / gridSize;
+  cellSize = Math.min(maxPlayCellSizeByWidth, maxPlayCellSizeByHeight);
   
-  // Apply the same logic to target cell size
-  targetCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
-  
-  // Ensure minimum cell sizes for playability - increased minimums for mobile
-  const minCellSize = Math.max(20, Math.min(30, window.innerWidth / 20)); // Responsive minimum
+  // Ensure minimum cell sizes for playability - increased minimums for better visibility
+  const minCellSize = Math.max(25, Math.min(40, window.innerWidth / 15)); // Increased minimum size
   cellSize = Math.max(cellSize, minCellSize);
-  targetCellSize = Math.max(targetCellSize, minCellSize * 0.8);
+  targetCellSize = Math.max(targetCellSize, minCellSize * 0.6); // Reduced target cell size minimum
   
-  // Keep target cells slightly smaller than main cells
-  targetCellSize = Math.min(targetCellSize, cellSize * 0.9);
+  // Keep target cells significantly smaller than main cells
+  targetCellSize = Math.min(targetCellSize, cellSize * 0.7); // Reduced from 0.95 to 0.7
 }
 
 function showTitleScreen() {
@@ -576,23 +576,18 @@ function drawGameScreen() {
   
   // Draw target pattern (top grid) - positioned higher to use more space
   let targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  let targetOffsetY = 30; // Reduced from 50 to use more space
+  let targetOffsetY = 40; // Increased from 20 to 40 to add more top padding
   
   // Target pattern label
   fill(0, 255, 255);
   textSize(18); // Slightly larger text
-  text("TARGET PATTERN", canvasWidth/2, targetOffsetY - 15);
+  text("TARGET PATTERN", canvasWidth/2, targetOffsetY - 20); // Increased from -10 to -20 for more top padding
   
   drawGrid(targetPattern, targetOffsetX, targetOffsetY, targetCellSize, true);
   
-  // Draw main grid (bottom grid) - positioned with tighter spacing
+  // Draw main grid (bottom grid) - positioned with increased spacing
   let offsetX = (canvasWidth - mainGridWidth) / 2;
-  let offsetY = targetOffsetY + targetGridHeight + 40; // Reduced spacing from 60 to 40
-  
-  // Main grid label
-  fill(0, 255, 255);
-  textSize(18); // Slightly larger text
-  text("PLAY AREA", canvasWidth/2, offsetY - 15);
+  let offsetY = targetOffsetY + targetGridHeight + 50; // Increased spacing from 25 to 50
   
   drawGrid(grid, offsetX, offsetY, cellSize, false);
   
@@ -643,14 +638,14 @@ function drawGrid(grid, offsetX, offsetY, cSize, isTarget) {
         
         // Core cell
         fill(red(glowColor), green(glowColor), blue(glowColor), 255);
-        stroke(255, 255, 255, 100);
-        strokeWeight(1);
+        stroke(255, 255, 255, 200); // White gridlines with higher opacity
+        strokeWeight(2); // Increased gridline width
         rect(j * cSize + offsetX, i * cSize + offsetY, cSize, cSize, 5);
       } else {
-        // Empty cells with subtle border
+        // Empty cells with white gridlines
         fill(0, 0, 0, 100);
-        stroke(0, 255, 255, 50);
-        strokeWeight(1);
+        stroke(255, 255, 255, 200); // White gridlines with higher opacity
+        strokeWeight(2); // Increased gridline width
         rect(j * cSize + offsetX, i * cSize + offsetY, cSize, cSize, 5);
       }
     }
