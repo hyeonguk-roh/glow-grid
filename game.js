@@ -27,8 +27,6 @@ let adProgress = 0;
 let touchStartX = 0;
 let touchStartY = 0;
 let isTouching = false;
-let lastTapTime = 0;
-let tapDebounceDelay = 300; // 300ms debounce to prevent rapid taps
 
 function setup() {
   // Create responsive canvas that fits in viewport
@@ -179,8 +177,7 @@ function setupEventListeners() {
   
   canvasContainer.addEventListener('touchstart', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
-      // Prevent default to stop double-tap zoom
-      e.preventDefault();
+      // Don't prevent default on touchstart
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         touchStartX = touch.clientX;
@@ -188,31 +185,23 @@ function setupEventListeners() {
         isTouching = true;
       }
     }
-  }, { passive: false });
+  }, { passive: true });
   
   canvasContainer.addEventListener('touchmove', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
-      // Prevent scrolling
       e.preventDefault();
     }
   }, { passive: false });
   
   canvasContainer.addEventListener('touchend', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying && isTouching) {
-      // Prevent default to stop double-tap zoom
       e.preventDefault();
       const touch = e.changedTouches[0];
       const deltaX = Math.abs(touch.clientX - touchStartX);
       const deltaY = Math.abs(touch.clientY - touchStartY);
-      
-      // Only trigger if it's a tap (not a swipe) and reset touching state immediately
-      if (deltaX < 10 && deltaY < 10) {
-        // Debounce rapid taps
-        const currentTime = Date.now();
-        if (currentTime - lastTapTime > tapDebounceDelay) {
-          handleCanvasClick(touch.clientX, touch.clientY);
-          lastTapTime = currentTime;
-        }
+      // Only trigger if it's a tap (not a swipe)
+      if (deltaX < 15 && deltaY < 15) {
+        handleCanvasClick(touch.clientX, touch.clientY);
       }
       isTouching = false;
     }
@@ -229,6 +218,13 @@ function setupEventListeners() {
   // Prevent context menu on long press for canvas only
   canvasContainer.addEventListener('contextmenu', function(e) {
     e.preventDefault();
+  });
+  
+  // Add click handler for desktop mouse clicks
+  canvasContainer.addEventListener('click', function(e) {
+    if (currentScreen === 'game' && !gameWon && !adPlaying) {
+      handleCanvasClick(e.clientX, e.clientY);
+    }
   });
 }
 
@@ -469,48 +465,9 @@ function computeSolution() {
 }
 
 function mousePressed() {
-  if (currentScreen !== 'game' || gameWon || adPlaying) return;
-  
-  // Use the same positioning calculations as drawGameScreen and handleGridClick
-  const targetGridWidth = gridSize * targetCellSize;
-  const targetGridHeight = gridSize * targetCellSize;
-  const mainGridWidth = gridSize * cellSize;
-  const mainGridHeight = gridSize * cellSize;
-  
-  // Calculate grid positions exactly like drawGameScreen and handleGridClick
-  const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  const targetOffsetY = 40; // Updated to match drawGameScreen
-  
-  const mainGridX = (canvasWidth - mainGridWidth) / 2;
-  const mainGridY = targetOffsetY + targetGridHeight + 50; // Updated to match drawGameScreen (50 instead of 25)
-  
-  // Check if click is in main grid
-  if (mouseX >= mainGridX && mouseX <= mainGridX + mainGridWidth &&
-      mouseY >= mainGridY && mouseY <= mainGridY + mainGridHeight) {
-    
-    const i = Math.floor((mouseY - mainGridY) / cellSize);
-    const j = Math.floor((mouseX - mainGridX) / cellSize);
-    
-    if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
-      // Check if this is the hinted tile
-      if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
-        // Player clicked the hinted tile, remove the hint
-        hintRequested = false;
-        hintCell = null;
-      }
-      
-      toggleCell(grid, i, j, gridSize);
-      toggleCell(grid, i-1, j, gridSize);
-      toggleCell(grid, i+1, j, gridSize);
-      toggleCell(grid, i, j-1, gridSize);
-      toggleCell(grid, i, j+1, gridSize);
-      computeSolution();
-      if (checkWin()) {
-        gameWon = true;
-        showNextButton();
-      }
-    }
-  }
+  // Disable p5.js mousePressed to prevent conflicts with custom touch handlers
+  // All interaction is now handled by custom touch/click handlers
+  return false;
 }
 
 function getHint() {
