@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#00ffff">
+  <meta name="msapplication-TileColor" content="#00ffff">
   <title>Glow Grid - Neon Puzzle Game</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <link rel="stylesheet" href="styles.css">
@@ -18,7 +23,7 @@
     <div class="title-content">
       <div class="size-selector-container">
         <label for="gridSizeSelect">Select Grid Size:</label>
-        <select id="gridSizeSelect" class="size-dropdown">
+        <select id="gridSizeSelect" class="size-dropdown" aria-label="Select grid size">
           <option value="4">4 x 4</option>
           <option value="5">5 x 5</option>
           <option value="6">6 x 6</option>
@@ -26,23 +31,23 @@
           <option value="8">8 x 8</option>
         </select>
       </div>
-      <button class="play-btn" id="playBtn">START GAME</button>
+      <button class="play-btn" id="playBtn" aria-label="Start game">START GAME</button>
     </div>
   </div>
 
   <!-- Game Screen -->
   <div id="gameScreen" class="screen">
-    <button class="back-btn" id="backBtn">← BACK</button>
-    <div id="canvasContainer"></div>
+    <button class="back-btn" id="backBtn" aria-label="Go back to title screen">← BACK</button>
+    <div id="canvasContainer" role="application" aria-label="Game board"></div>
     <div class="game-controls">
-      <button class="game-btn" id="hintBtn">HINT</button>
-      <button class="game-btn" id="newGameBtn">NEW GAME</button>
-      <button class="game-btn" id="resetBtn">RESET</button>
+      <button class="game-btn" id="hintBtn" aria-label="Get hint">HINT</button>
+      <button class="game-btn" id="newGameBtn" aria-label="Start new game">NEW GAME</button>
+      <button class="game-btn" id="resetBtn" aria-label="Reset current game">RESET</button>
     </div>
   </div>
 
   <!-- AdSense Ad Container (Hidden by default) -->
-  <div id="adContainer" class="ad-container" style="display: none;">
+  <div id="adContainer" class="ad-container hidden" role="dialog" aria-label="Advertisement">
     <div class="ad-wrapper">
       <div class="ad-label">ADVERTISEMENT</div>
       <div id="adSenseAd" class="ad-content">

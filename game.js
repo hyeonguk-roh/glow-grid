@@ -23,18 +23,14 @@ let adStartTime = 0;
 let adDuration = 10000; // 10 seconds in milliseconds
 let adProgress = 0;
 
+// Touch handling variables
+let touchStartX = 0;
+let touchStartY = 0;
+let isTouching = false;
+
 function setup() {
   // Create responsive canvas that fits in viewport
-  canvasWidth = Math.min(windowWidth - 4, 600);
-  canvasHeight = Math.min(windowHeight - 4, 800);
-  
-  // Ensure canvas maintains aspect ratio
-  const aspectRatio = 600 / 800; // 3:4 aspect ratio
-  if (canvasWidth / canvasHeight > aspectRatio) {
-    canvasWidth = canvasHeight * aspectRatio;
-  } else {
-    canvasHeight = canvasWidth / aspectRatio;
-  }
+  updateCanvasSize();
   
   canvas = createCanvas(canvasWidth, canvasHeight);
   canvas.parent('canvasContainer');
@@ -49,23 +45,122 @@ function setup() {
   gridSize = parseInt(document.getElementById('gridSizeSelect').value);
 }
 
+function updateCanvasSize() {
+  // Get container dimensions
+  const container = document.getElementById('canvasContainer');
+  const containerRect = container.getBoundingClientRect();
+  
+  // Calculate available space with padding
+  const maxWidth = Math.min(window.innerWidth - 40, 800);
+  const maxHeight = Math.min(window.innerHeight - 200, 1000); // Account for controls and padding
+  
+  // Maintain aspect ratio (3:4 for better mobile experience)
+  const aspectRatio = 3 / 4;
+  
+  if (maxWidth / maxHeight > aspectRatio) {
+    canvasWidth = maxHeight * aspectRatio;
+    canvasHeight = maxHeight;
+  } else {
+    canvasWidth = maxWidth;
+    canvasHeight = maxWidth / aspectRatio;
+  }
+  
+  // Ensure minimum sizes
+  canvasWidth = Math.max(canvasWidth, 300);
+  canvasHeight = Math.max(canvasHeight, 400);
+  
+  // Ensure maximum sizes
+  canvasWidth = Math.min(canvasWidth, 800);
+  canvasHeight = Math.min(canvasHeight, 1000);
+}
+
 function setupEventListeners() {
   // Title screen events
-  document.getElementById('playBtn').addEventListener('click', () => {
+  const playBtn = document.getElementById('playBtn');
+  playBtn.addEventListener('click', () => {
+    gridSize = parseInt(document.getElementById('gridSizeSelect').value);
+    showGameScreen();
+    initializeGame(gridSize);
+  });
+  
+  // Add touch event for play button
+  playBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
     gridSize = parseInt(document.getElementById('gridSizeSelect').value);
     showGameScreen();
     initializeGame(gridSize);
   });
 
+  // Handle dropdown changes
+  const gridSizeSelect = document.getElementById('gridSizeSelect');
+  
+  // Handle change event
+  gridSizeSelect.addEventListener('change', () => {
+    gridSize = parseInt(gridSizeSelect.value);
+  });
+  
+  // Handle click event
+  gridSizeSelect.addEventListener('click', (e) => {
+    gridSize = parseInt(gridSizeSelect.value);
+  });
+  
+  // Handle touch events for mobile
+  gridSizeSelect.addEventListener('touchstart', (e) => {
+    // Don't prevent default - let the native dropdown handle it
+    gridSize = parseInt(gridSizeSelect.value);
+  }, { passive: true });
+  
+  gridSizeSelect.addEventListener('touchend', (e) => {
+    // Don't prevent default - let the native dropdown handle it
+    gridSize = parseInt(gridSizeSelect.value);
+  }, { passive: true });
+  
+  // Handle focus events
+  gridSizeSelect.addEventListener('focus', () => {
+    gridSize = parseInt(gridSizeSelect.value);
+  });
+  
+  // Handle input events
+  gridSizeSelect.addEventListener('input', () => {
+    gridSize = parseInt(gridSizeSelect.value);
+  });
+  
   // Game screen events
-  document.getElementById('backBtn').addEventListener('click', showTitleScreen);
-  document.getElementById('hintBtn').addEventListener('click', getHint);
-  document.getElementById('newGameBtn').addEventListener('click', () => {
+  const backBtn = document.getElementById('backBtn');
+  backBtn.addEventListener('click', showTitleScreen);
+  backBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    showTitleScreen();
+  });
+  
+  const hintBtn = document.getElementById('hintBtn');
+  hintBtn.addEventListener('click', getHint);
+  hintBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    getHint();
+  });
+  
+  const newGameBtn = document.getElementById('newGameBtn');
+  newGameBtn.addEventListener('click', () => {
     if (!adPlaying) {
       initializeGame(gridSize);
     }
   });
-  document.getElementById('resetBtn').addEventListener('click', () => {
+  newGameBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (!adPlaying) {
+      initializeGame(gridSize);
+    }
+  });
+  
+  const resetBtn = document.getElementById('resetBtn');
+  resetBtn.addEventListener('click', () => {
+    if (!adPlaying) {
+      resetGame();
+    }
+  });
+  resetBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
     if (!adPlaying) {
       resetGame();
     }
@@ -74,29 +169,121 @@ function setupEventListeners() {
   // Handle window resize
   window.addEventListener('resize', handleResize);
   
-  // Prevent scrolling on mobile
-  document.addEventListener('touchmove', function(e) {
-    e.preventDefault();
+  // Enhanced touch handling for canvas only
+  const canvasContainer = document.getElementById('canvasContainer');
+  
+  canvasContainer.addEventListener('touchstart', function(e) {
+    if (currentScreen === 'game' && !gameWon && !adPlaying) {
+      // Don't prevent default - let the touch complete
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isTouching = true;
+      }
+    }
+  }, { passive: true });
+  
+  canvasContainer.addEventListener('touchmove', function(e) {
+    if (currentScreen === 'game' && !gameWon && !adPlaying) {
+      // Only prevent scrolling, not the touch
+      e.preventDefault();
+    }
   }, { passive: false });
   
-  document.addEventListener('wheel', function(e) {
-    e.preventDefault();
+  canvasContainer.addEventListener('touchend', function(e) {
+    if (currentScreen === 'game' && !gameWon && !adPlaying && isTouching) {
+      // Don't prevent default - let the touch complete
+      const touch = e.changedTouches[0];
+      const deltaX = Math.abs(touch.clientX - touchStartX);
+      const deltaY = Math.abs(touch.clientY - touchStartY);
+      
+      // Only trigger if it's a tap (not a swipe)
+      if (deltaX < 10 && deltaY < 10) {
+        handleCanvasClick(touch.clientX, touch.clientY);
+      }
+      isTouching = false;
+    }
+  }, { passive: true });
+  
+  // Prevent scrolling on the body but allow button interactions
+  document.addEventListener('touchmove', function(e) {
+    // Only prevent scrolling on the canvas container
+    if (e.target.closest('#canvasContainer')) {
+      e.preventDefault();
+    }
   }, { passive: false });
+  
+  // Prevent context menu on long press for canvas only
+  canvasContainer.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+}
+
+function handleCanvasClick(clientX, clientY) {
+  if (currentScreen !== 'game' || gameWon) return;
+  
+  // Get canvas position relative to viewport
+  const canvasRect = canvas.elt.getBoundingClientRect();
+  const canvasX = clientX - canvasRect.left;
+  const canvasY = clientY - canvasRect.top;
+  
+  // Convert to canvas coordinates
+  const x = (canvasX / canvasRect.width) * canvasWidth;
+  const y = (canvasY / canvasRect.height) * canvasHeight;
+  
+  // Handle the click
+  handleGridClick(x, y);
+}
+
+function handleGridClick(x, y) {
+  // Use the same positioning calculations as drawGameScreen
+  const targetGridWidth = gridSize * targetCellSize;
+  const targetGridHeight = gridSize * targetCellSize;
+  const mainGridWidth = gridSize * cellSize;
+  const mainGridHeight = gridSize * cellSize;
+  
+  // Calculate grid positions exactly like drawGameScreen
+  const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
+  const targetOffsetY = 30;
+  
+  const mainGridX = (canvasWidth - mainGridWidth) / 2;
+  const mainGridY = targetOffsetY + targetGridHeight + 40;
+  
+  // Check if click is in main grid (play area)
+  if (x >= mainGridX && x <= mainGridX + mainGridWidth &&
+      y >= mainGridY && y <= mainGridY + mainGridHeight) {
+    
+    const i = Math.floor((y - mainGridY) / cellSize);
+    const j = Math.floor((x - mainGridX) / cellSize);
+    
+    if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
+      // Check if this is the hinted tile
+      if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
+        // Player clicked the hinted tile, remove the hint
+        hintRequested = false;
+        hintCell = null;
+      }
+      
+      // Toggle the clicked cell and its adjacent cells
+      toggleCell(grid, i, j, gridSize);
+      toggleCell(grid, i-1, j, gridSize);
+      toggleCell(grid, i+1, j, gridSize);
+      toggleCell(grid, i, j-1, gridSize);
+      toggleCell(grid, i, j+1, gridSize);
+      
+      computeSolution();
+      if (checkWin()) {
+        gameWon = true;
+        showNextButton();
+      }
+    }
+  }
 }
 
 function handleResize() {
   // Update canvas size on window resize
-  canvasWidth = Math.min(windowWidth - 4, 600);
-  canvasHeight = Math.min(windowHeight - 4, 800);
-  
-  // Ensure canvas maintains aspect ratio
-  const aspectRatio = 600 / 800; // 3:4 aspect ratio
-  if (canvasWidth / canvasHeight > aspectRatio) {
-    canvasWidth = canvasHeight * aspectRatio;
-  } else {
-    canvasHeight = canvasWidth / aspectRatio;
-  }
-  
+  updateCanvasSize();
   resizeCanvas(canvasWidth, canvasHeight);
   
   // Recalculate cell sizes for responsive design
@@ -130,9 +317,10 @@ function calculateCellSizes() {
   // Apply the same logic to target cell size
   targetCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
   
-  // Ensure minimum cell sizes for playability - increased minimums
-  cellSize = Math.max(cellSize, 25);
-  targetCellSize = Math.max(targetCellSize, 20);
+  // Ensure minimum cell sizes for playability - increased minimums for mobile
+  const minCellSize = Math.max(20, Math.min(30, window.innerWidth / 20)); // Responsive minimum
+  cellSize = Math.max(cellSize, minCellSize);
+  targetCellSize = Math.max(targetCellSize, minCellSize * 0.8);
   
   // Keep target cells slightly smaller than main cells
   targetCellSize = Math.min(targetCellSize, cellSize * 0.9);
@@ -271,83 +459,43 @@ function computeSolution() {
 function mousePressed() {
   if (currentScreen !== 'game' || gameWon || adPlaying) return;
   
-  // Calculate grid position based on responsive canvas
-  const mainGridWidth = gridSize * cellSize;
-  const targetGridHeight = gridSize * targetCellSize;
+  // Use the new responsive grid positioning
+  const gridSpacing = 40;
+  const labelHeight = 25;
+  const gridWidth = cellSize * gridSize;
+  const gridHeight = cellSize * gridSize;
   
-  let offsetX = (canvasWidth - mainGridWidth) / 2;
-  let offsetY = 30 + targetGridHeight + 40; // Updated to match new positioning
+  // Main grid position
+  const mainGridX = (canvasWidth - gridWidth) / 2;
+  const mainGridY = labelHeight + 10;
   
-  let i = floor((mouseY - offsetY) / cellSize);
-  let j = floor((mouseX - offsetX) / cellSize);
-  
-  if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
-    // Check if this is the hinted tile
-    if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
-      // Player clicked the hinted tile, remove the hint
-      hintRequested = false;
-      hintCell = null;
-    }
+  // Check if click is in main grid
+  if (mouseX >= mainGridX && mouseX <= mainGridX + gridWidth &&
+      mouseY >= mainGridY && mouseY <= mainGridY + gridHeight) {
     
-    toggleCell(grid, i, j, gridSize);
-    toggleCell(grid, i-1, j, gridSize);
-    toggleCell(grid, i+1, j, gridSize);
-    toggleCell(grid, i, j-1, gridSize);
-    toggleCell(grid, i, j+1, gridSize);
-    computeSolution();
-    if (checkWin()) {
-      gameWon = true;
-      showNextButton();
+    const i = Math.floor((mouseY - mainGridY) / cellSize);
+    const j = Math.floor((mouseX - mainGridX) / cellSize);
+    
+    if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
+      // Check if this is the hinted tile
+      if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
+        // Player clicked the hinted tile, remove the hint
+        hintRequested = false;
+        hintCell = null;
+      }
+      
+      toggleCell(grid, i, j, gridSize);
+      toggleCell(grid, i-1, j, gridSize);
+      toggleCell(grid, i+1, j, gridSize);
+      toggleCell(grid, i, j-1, gridSize);
+      toggleCell(grid, i, j+1, gridSize);
+      computeSolution();
+      if (checkWin()) {
+        gameWon = true;
+        showNextButton();
+      }
     }
   }
-}
-
-// Handle touch events for mobile
-function touchStarted() {
-  if (currentScreen !== 'game' || gameWon) return false;
-  
-  // Prevent default touch behavior
-  return false;
-}
-
-function touchMoved() {
-  return false;
-}
-
-function touchEnded() {
-  if (currentScreen !== 'game' || gameWon || adPlaying) return false;
-  
-  // Calculate grid position based on responsive canvas
-  const mainGridWidth = gridSize * cellSize;
-  const targetGridHeight = gridSize * targetCellSize;
-  
-  let offsetX = (canvasWidth - mainGridWidth) / 2;
-  let offsetY = 30 + targetGridHeight + 40; // Updated to match new positioning
-  
-  let i = floor((touches[0].y - offsetY) / cellSize);
-  let j = floor((touches[0].x - offsetX) / cellSize);
-  
-  if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
-    // Check if this is the hinted tile
-    if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
-      // Player touched the hinted tile, remove the hint
-      hintRequested = false;
-      hintCell = null;
-    }
-    
-    toggleCell(grid, i, j, gridSize);
-    toggleCell(grid, i-1, j, gridSize);
-    toggleCell(grid, i+1, j, gridSize);
-    toggleCell(grid, i, j-1, gridSize);
-    toggleCell(grid, i, j+1, gridSize);
-    computeSolution();
-    if (checkWin()) {
-      gameWon = true;
-      showNextButton();
-    }
-  }
-  
-  return false;
 }
 
 function getHint() {
@@ -360,7 +508,8 @@ function getHint() {
   
   // Show the ad container
   const adContainer = document.getElementById('adContainer');
-  adContainer.style.display = 'flex';
+  adContainer.classList.remove('hidden');
+  adContainer.classList.add('visible');
   
   // Load AdSense ad
   try {
@@ -538,7 +687,8 @@ function completeAdAndGiveHint() {
   
   // Hide the ad container
   const adContainer = document.getElementById('adContainer');
-  adContainer.style.display = 'none';
+  adContainer.classList.remove('visible');
+  adContainer.classList.add('hidden');
   
   // Show hint indicator instead of automatically clicking
   hintRequested = true;

@@ -8,6 +8,14 @@ html, body {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  position: fixed;
+  touch-action: pan-x pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 body { 
@@ -21,11 +29,37 @@ body {
   width: 100vw;
   overflow: hidden;
   padding: 2vh 2vw;
+  min-height: 100vh;
+  min-width: 100vw;
+  /* Safe area handling for notched devices */
+  padding-top: max(2vh, env(safe-area-inset-top));
+  padding-bottom: max(2vh, env(safe-area-inset-bottom));
+  padding-left: max(2vw, env(safe-area-inset-left));
+  padding-right: max(2vw, env(safe-area-inset-right));
+}
+
+/* Allow form elements to be selectable and interactive */
+select, input, textarea, button {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
+  /* Ensure form elements are not affected by body touch handling */
+  pointer-events: auto;
+}
+
+/* Ensure dropdowns work properly on mobile */
+select {
+  /* Allow native dropdown behavior */
+  -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3);
+  /* Ensure it's clickable */
+  cursor: pointer;
 }
 
 h1 {
   text-align: center;
-  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  font-size: clamp(2rem, 8vw, 3.5rem);
   margin-bottom: 2vh;
   text-shadow: 
     0 0 10px #00ffff,
@@ -33,11 +67,20 @@ h1 {
     0 0 30px #00ffff,
     0 0 40px #00ffff;
   animation: glow 2s ease-in-out infinite alternate;
+  line-height: 1.2;
+  /* Use transform for better performance */
+  will-change: transform;
 }
 
 @keyframes glow {
-  from { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff; }
-  to { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff; }
+  from { 
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+    transform: scale(1);
+  }
+  to { 
+    text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff;
+    transform: scale(1.02);
+  }
 }
 
 canvas { 
@@ -53,12 +96,18 @@ canvas {
   width: auto;
   height: auto;
   object-fit: contain;
+  touch-action: none;
+  /* Prevent canvas from being selectable */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 button { 
   margin: 0.5vh 0.5vw; 
-  padding: 1vh 2vw; 
-  font-size: clamp(0.8rem, 2.5vw, 1rem); 
+  padding: clamp(1vh, 3vw, 2vh) clamp(2vw, 4vw, 3vw); 
+  font-size: clamp(0.8rem, 3vw, 1.2rem); 
   cursor: pointer;
   background: linear-gradient(45deg, #00ffff, #0080ff);
   border: 2px solid #00ffff;
@@ -70,6 +119,17 @@ button {
   letter-spacing: 1px;
   transition: all 0.3s ease;
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  /* Prevent button text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Ensure buttons are clickable on mobile */
+  position: relative;
+  z-index: 10;
 }
 
 button:hover { 
@@ -90,6 +150,12 @@ button:active {
   height: 100vh;
   max-width: 100vw;
   justify-content: center;
+  padding: 2vh 2vw;
+  /* Safe area handling */
+  padding-top: max(2vh, env(safe-area-inset-top));
+  padding-bottom: max(2vh, env(safe-area-inset-bottom));
+  padding-left: max(2vw, env(safe-area-inset-left));
+  padding-right: max(2vw, env(safe-area-inset-right));
 }
 
 .screen.active {
@@ -101,29 +167,31 @@ button:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3vh;
+  gap: clamp(2vh, 4vw, 4vh);
   width: 100%;
-  max-width: 400px;
+  max-width: min(400px, 90vw);
+  padding: 2vh 2vw;
 }
 
 .size-selector-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1vh;
+  gap: clamp(1vh, 2vw, 2vh);
   width: 100%;
 }
 
 .size-selector-container label {
-  font-size: clamp(0.9rem, 3vw, 1.2rem);
+  font-size: clamp(1rem, 4vw, 1.4rem);
   font-weight: bold;
   text-shadow: 0 0 10px #00ffff;
   color: #00ffff;
+  text-align: center;
 }
 
 .size-dropdown {
-  padding: 1vh 2vw;
-  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  padding: clamp(1vh, 3vw, 2vh) clamp(2vw, 4vw, 3vw);
+  font-size: clamp(0.9rem, 3.5vw, 1.2rem);
   background: rgba(0, 0, 0, 0.8);
   border: 2px solid #00ffff;
   border-radius: 25px;
@@ -134,7 +202,17 @@ button:active {
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
   transition: all 0.3s ease;
   width: 100%;
-  max-width: 200px;
+  max-width: min(250px, 80vw);
+  min-height: 44px;
+  /* Ensure dropdown is touchable */
+  touch-action: manipulation;
+  /* Ensure proper z-index */
+  position: relative;
+  z-index: 10;
+  /* Don't interfere with native dropdown behavior */
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  appearance: auto;
 }
 
 .size-dropdown:hover {
@@ -147,6 +225,11 @@ button:active {
   box-shadow: 0 0 30px rgba(0, 255, 255, 1);
 }
 
+.size-dropdown:active {
+  transform: translateY(0);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+}
+
 .size-dropdown option {
   background: #000;
   color: #00ffff;
@@ -154,11 +237,12 @@ button:active {
 }
 
 .play-btn {
-  font-size: clamp(1rem, 4vw, 1.3rem);
-  padding: 2vh 4vw;
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  padding: clamp(2vh, 5vw, 3vh) clamp(4vw, 8vw, 6vw);
   background: linear-gradient(45deg, #00ff80, #00ffff);
   box-shadow: 0 0 30px rgba(0, 255, 128, 0.8);
-  min-width: 150px;
+  min-width: clamp(150px, 60vw, 200px);
+  min-height: clamp(50px, 12vw, 60px);
 }
 
 .play-btn:hover {
@@ -170,20 +254,30 @@ button:active {
 #gameScreen {
   position: relative;
   justify-content: space-between;
-  padding: 2vh 2vw;
+  padding: clamp(1vh, 2vw, 2vh) clamp(1vw, 2vw, 2vw);
   height: 100vh;
+  gap: 1vh;
+  /* Safe area handling */
+  padding-top: max(clamp(1vh, 2vw, 2vh), env(safe-area-inset-top));
+  padding-bottom: max(clamp(1vh, 2vw, 2vh), env(safe-area-inset-bottom));
+  padding-left: max(clamp(1vw, 2vw, 2vw), env(safe-area-inset-left));
+  padding-right: max(clamp(1vw, 2vw, 2vw), env(safe-area-inset-right));
 }
 
 .back-btn {
   position: absolute;
-  top: 2vh;
-  left: 2vw;
+  top: clamp(1vh, 2vw, 2vh);
+  left: clamp(1vw, 2vw, 2vw);
   background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
   border: 2px solid #ff6b6b;
   box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
   z-index: 100;
-  padding: 1vh 2vw;
-  font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+  padding: clamp(0.8vh, 2vw, 1.5vh) clamp(1.5vw, 3vw, 2.5vw);
+  font-size: clamp(0.7rem, 3vw, 1rem);
+  min-height: 44px;
+  /* Safe area handling for back button */
+  top: max(clamp(1vh, 2vw, 2vh), env(safe-area-inset-top));
+  left: max(clamp(1vw, 2vw, 2vw), env(safe-area-inset-left));
 }
 
 .back-btn:hover {
@@ -197,31 +291,42 @@ button:active {
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-height: 70vh;
-  margin: 1vh 0;
+  max-height: 75vh;
+  margin: clamp(0.5vh, 1vw, 1vh) 0;
   overflow: hidden;
+  min-height: 200px;
+  /* Prevent touch scrolling */
+  touch-action: none;
+  /* Center canvas properly */
+  position: relative;
+  /* Ensure canvas container doesn't interfere with button clicks */
+  z-index: 1;
 }
 
 .game-controls {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1vw;
+  gap: clamp(1vw, 2vw, 2vw);
   width: 100%;
-  max-width: 600px;
-  padding: 2vh 2vw;
+  max-width: min(600px, 95vw);
+  padding: clamp(1.5vh, 3vw, 2.5vh) clamp(1.5vw, 3vw, 2.5vw);
   background: rgba(0, 255, 255, 0.1);
   border-radius: 15px;
   border: 1px solid rgba(0, 255, 255, 0.3);
-  margin-top: 1vh;
+  margin-top: clamp(0.5vh, 1vw, 1vh);
+  flex-wrap: wrap;
+  /* Safe area handling for bottom controls */
+  margin-bottom: max(clamp(0.5vh, 1vw, 1vh), env(safe-area-inset-bottom));
 }
 
 .game-btn {
   flex: 1;
-  max-width: 120px;
-  min-width: 80px;
-  font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-  padding: 1.5vh 1.5vw;
+  max-width: clamp(120px, 25vw, 150px);
+  min-width: clamp(80px, 20vw, 100px);
+  font-size: clamp(0.7rem, 3vw, 1rem);
+  padding: clamp(1vh, 2.5vw, 1.5vh) clamp(1vw, 2vw, 1.5vw);
+  min-height: 44px;
 }
 
 #nextBtn { 
@@ -229,10 +334,11 @@ button:active {
   background: linear-gradient(45deg, #00ff80, #00ffff);
   border: 2px solid #00ff80; 
   border-radius: 25px;
-  font-size: clamp(0.8rem, 3vw, 1rem);
-  padding: 1.5vh 3vw;
+  font-size: clamp(0.8rem, 3.5vw, 1.2rem);
+  padding: clamp(1.5vh, 3vw, 2vh) clamp(3vw, 5vw, 4vw);
   box-shadow: 0 0 30px rgba(0, 255, 128, 0.8);
   z-index: 1000;
+  min-height: 44px;
 }
 
 #nextBtn:hover { 
@@ -240,90 +346,143 @@ button:active {
   box-shadow: 0 0 40px rgba(0, 255, 128, 1);
 }
 
-/* Mobile Responsive Design */
+/* Enhanced Mobile Responsive Design */
 @media (max-width: 768px) {
   body {
     padding: 1vh 1vw;
+    /* Safe area handling */
+    padding-top: max(1vh, env(safe-area-inset-top));
+    padding-bottom: max(1vh, env(safe-area-inset-bottom));
+    padding-left: max(1vw, env(safe-area-inset-left));
+    padding-right: max(1vw, env(safe-area-inset-right));
   }
   
   h1 {
     margin-bottom: 1vh;
+    font-size: clamp(1.8rem, 10vw, 2.5rem);
   }
   
   .title-content {
-    gap: 2vh;
+    gap: clamp(1.5vh, 3vw, 2.5vh);
+    max-width: 95vw;
   }
   
   .size-selector-container {
-    gap: 0.8vh;
+    gap: clamp(0.8vh, 1.5vw, 1.2vh);
   }
   
   .size-dropdown {
-    max-width: 180px;
-    font-size: clamp(0.7rem, 3vw, 0.9rem);
-    padding: 0.8vh 1.5vw;
+    max-width: min(200px, 70vw);
+    font-size: clamp(0.8rem, 4vw, 1rem);
+    padding: clamp(0.8vh, 2.5vw, 1.5vh) clamp(1.5vw, 3vw, 2vw);
   }
   
   .play-btn {
-    padding: 1.5vh 3vw;
-    min-width: 120px;
+    padding: clamp(1.5vh, 4vw, 2.5vh) clamp(3vw, 6vw, 4vw);
+    min-width: clamp(120px, 70vw, 180px);
+    font-size: clamp(1rem, 5vw, 1.3rem);
   }
   
   #gameScreen {
-    padding: 1vh 1vw;
+    padding: clamp(0.5vh, 1vw, 1vh) clamp(0.5vw, 1vw, 1vw);
+    gap: 0.5vh;
   }
   
   .back-btn {
-    top: 1vh;
-    left: 1vw;
-    padding: 0.8vh 1.5vw;
-    font-size: clamp(0.6rem, 3vw, 0.8rem);
+    top: clamp(0.5vh, 1vw, 1vh);
+    left: clamp(0.5vw, 1vw, 1vw);
+    padding: clamp(0.6vh, 2vw, 1vh) clamp(1vw, 2.5vw, 1.5vw);
+    font-size: clamp(0.6rem, 3.5vw, 0.8rem);
+    /* Safe area handling */
+    top: max(clamp(0.5vh, 1vw, 1vh), env(safe-area-inset-top));
+    left: max(clamp(0.5vw, 1vw, 1vw), env(safe-area-inset-left));
   }
   
   .game-controls {
-    flex-direction: column;
-    gap: 1vh;
-    padding: 1.5vh 1.5vw;
+    flex-direction: row;
+    gap: clamp(0.8vh, 1.5vw, 1.2vh);
+    padding: clamp(1vh, 2vw, 1.5vh) clamp(1vw, 2vw, 1.5vw);
+    flex-wrap: wrap;
   }
   
   .game-btn {
-    max-width: 200px;
-    width: 100%;
-    font-size: clamp(0.6rem, 3vw, 0.8rem);
-    padding: 1vh 1.5vw;
+    max-width: clamp(100px, 30vw, 120px);
+    width: auto;
+    font-size: clamp(0.6rem, 3.5vw, 0.8rem);
+    padding: clamp(0.8vh, 2vw, 1.2vh) clamp(0.8vw, 1.5vw, 1vw);
+    flex: 1;
+    min-width: clamp(70px, 25vw, 90px);
   }
   
   canvas {
     border-width: 1px;
     border-radius: 6px;
   }
+  
+  #canvasContainer {
+    max-height: 70vh;
+    min-height: 150px;
+  }
 }
 
 @media (max-width: 480px) {
   .title-content {
-    gap: 1.5vh;
+    gap: clamp(1vh, 2vw, 1.5vh);
+    padding: 1vh 1vw;
   }
   
   .size-dropdown {
-    max-width: 160px;
-    font-size: clamp(0.6rem, 3.5vw, 0.8rem);
-    padding: 0.6vh 1vw;
+    max-width: min(180px, 75vw);
+    font-size: clamp(0.7rem, 4vw, 0.9rem);
+    padding: clamp(0.6vh, 2vw, 1vh) clamp(1vw, 2.5vw, 1.5vw);
   }
   
   .play-btn {
-    padding: 1vh 2.5vw;
-    min-width: 100px;
-    font-size: clamp(0.8rem, 4vw, 1rem);
+    padding: clamp(1vh, 3vw, 1.5vh) clamp(2.5vw, 5vw, 3vw);
+    min-width: clamp(100px, 80vw, 150px);
+    font-size: clamp(0.9rem, 5vw, 1.1rem);
   }
   
   .game-controls {
-    padding: 1vh 1vw;
-    gap: 0.8vh;
+    padding: clamp(0.8vh, 1.5vw, 1vh) clamp(0.8vw, 1.5vw, 1vw);
+    gap: clamp(0.6vh, 1vw, 0.8vh);
   }
   
   .game-btn {
-    padding: 0.8vh 1vw;
-    font-size: clamp(0.5rem, 3.5vw, 0.7rem);
+    padding: clamp(0.6vh, 1.5vw, 0.8vh) clamp(0.6vw, 1vw, 0.8vw);
+    font-size: clamp(0.5rem, 4vw, 0.7rem);
+    min-width: clamp(60px, 28vw, 80px);
+  }
+  
+  h1 {
+    font-size: clamp(1.5rem, 12vw, 2rem);
+  }
+  
+  #canvasContainer {
+    max-height: 65vh;
+    min-height: 120px;
+  }
+}
+
+/* Small phone optimization */
+@media (max-width: 360px) {
+  .game-controls {
+    flex-direction: column;
+    gap: 0.5vh;
+  }
+  
+  .game-btn {
+    width: 100%;
+    max-width: 200px;
+    min-width: 120px;
+  }
+  
+  h1 {
+    font-size: clamp(1.2rem, 14vw, 1.8rem);
+  }
+  
+  .title-content {
+    gap: 1vh;
   }
 }
 
@@ -331,26 +490,60 @@ button:active {
 @media (max-height: 500px) and (orientation: landscape) {
   .title-content {
     flex-direction: row;
-    gap: 2vw;
+    gap: clamp(2vw, 3vw, 4vw);
+    max-width: 95vw;
   }
   
   .size-selector-container {
     flex-direction: row;
-    gap: 1vw;
+    gap: clamp(1vw, 1.5vw, 2vw);
   }
   
   .game-controls {
     flex-direction: row;
-    gap: 1vw;
+    gap: clamp(1vw, 1.5vw, 2vw);
   }
   
   h1 {
-    font-size: clamp(1rem, 4vw, 1.5rem);
-    margin-bottom: 1vh;
+    font-size: clamp(1rem, 6vw, 1.5rem);
+    margin-bottom: 0.5vh;
   }
   
   .title-content {
-    gap: 1.5vw;
+    gap: clamp(1.5vw, 2vw, 2.5vw);
+  }
+  
+  #canvasContainer {
+    max-height: 60vh;
+  }
+  
+  .play-btn {
+    padding: clamp(1vh, 2vw, 1.5vh) clamp(2vw, 3vw, 2.5vw);
+  }
+}
+
+/* Extra small height screens */
+@media (max-height: 400px) {
+  h1 {
+    font-size: clamp(0.8rem, 8vw, 1.2rem);
+    margin-bottom: 0.3vh;
+  }
+  
+  .title-content {
+    gap: 0.5vh;
+  }
+  
+  .size-selector-container {
+    gap: 0.3vh;
+  }
+  
+  .play-btn {
+    padding: 0.5vh 1.5vw;
+    font-size: clamp(0.7rem, 4vw, 0.9rem);
+  }
+  
+  #canvasContainer {
+    max-height: 50vh;
   }
 }
 
@@ -360,6 +553,7 @@ button:active {
     position: fixed;
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
 }
 
@@ -371,10 +565,18 @@ button:active {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   z-index: 10000;
+}
+
+.ad-container.hidden {
+  display: none;
+}
+
+.ad-container.visible {
+  display: flex;
 }
 
 .ad-wrapper {
