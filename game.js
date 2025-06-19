@@ -28,35 +28,27 @@ let touchStartX = 0;
 let touchStartY = 0;
 let isTouching = false;
 
+// Hint system variables
+let freeHintsRemaining = 3;
+let lastHintTime = 0;
+let hintCooldown = 3000; // 3 seconds in milliseconds
+
 function setup() {
-  // Create responsive canvas that fits in viewport
   updateCanvasSize();
-  
   canvas = createCanvas(canvasWidth, canvasHeight);
   canvas.parent('canvasContainer');
-  
   textAlign(CENTER, CENTER);
   textSize(20);
-
-  // Setup event listeners
   setupEventListeners();
-  
-  // Initialize with default grid size
   gridSize = parseInt(document.getElementById('gridSizeSelect').value);
 }
 
 function updateCanvasSize() {
-  // Get container dimensions
   const container = document.getElementById('canvasContainer');
   const containerRect = container.getBoundingClientRect();
-  
-  // Calculate available space with padding
   const maxWidth = Math.min(window.innerWidth - 40, 800);
-  const maxHeight = Math.min(window.innerHeight - 200, 1000); // Account for controls and padding
-  
-  // Maintain aspect ratio (3:4 for better mobile experience)
+  const maxHeight = Math.min(window.innerHeight - 200, 1000);
   const aspectRatio = 3 / 4;
-  
   if (maxWidth / maxHeight > aspectRatio) {
     canvasWidth = maxHeight * aspectRatio;
     canvasHeight = maxHeight;
@@ -64,26 +56,19 @@ function updateCanvasSize() {
     canvasWidth = maxWidth;
     canvasHeight = maxWidth / aspectRatio;
   }
-  
-  // Ensure minimum sizes
   canvasWidth = Math.max(canvasWidth, 300);
   canvasHeight = Math.max(canvasHeight, 400);
-  
-  // Ensure maximum sizes
   canvasWidth = Math.min(canvasWidth, 800);
   canvasHeight = Math.min(canvasHeight, 1000);
 }
 
 function setupEventListeners() {
-  // Title screen events
   const playBtn = document.getElementById('playBtn');
   playBtn.addEventListener('click', () => {
     gridSize = parseInt(document.getElementById('gridSizeSelect').value);
     showGameScreen();
     initializeGame(gridSize);
   });
-  
-  // Add touch event for play button
   playBtn.addEventListener('touchend', (e) => {
     e.preventDefault();
     gridSize = parseInt(document.getElementById('gridSizeSelect').value);
@@ -91,93 +76,44 @@ function setupEventListeners() {
     initializeGame(gridSize);
   });
 
-  // Handle dropdown changes
-  const gridSizeSelect = document.getElementById('gridSizeSelect');
-  
-  // Handle change event
-  gridSizeSelect.addEventListener('change', () => {
-    gridSize = parseInt(gridSizeSelect.value);
-  });
-  
-  // Handle click event
-  gridSizeSelect.addEventListener('click', (e) => {
-    gridSize = parseInt(gridSizeSelect.value);
-  });
-  
-  // Handle touch events for mobile
-  gridSizeSelect.addEventListener('touchstart', (e) => {
-    // Don't prevent default - let the native dropdown handle it
-    gridSize = parseInt(gridSizeSelect.value);
-  }, { passive: true });
-  
-  gridSizeSelect.addEventListener('touchend', (e) => {
-    // Don't prevent default - let the native dropdown handle it
-    gridSize = parseInt(gridSizeSelect.value);
-  }, { passive: true });
-  
-  // Handle focus events
-  gridSizeSelect.addEventListener('focus', () => {
-    gridSize = parseInt(gridSizeSelect.value);
-  });
-  
-  // Handle input events
-  gridSizeSelect.addEventListener('input', () => {
-    gridSize = parseInt(gridSizeSelect.value);
-  });
-  
-  // Game screen events
   const backBtn = document.getElementById('backBtn');
   backBtn.addEventListener('click', showTitleScreen);
   backBtn.addEventListener('touchend', (e) => {
     e.preventDefault();
     showTitleScreen();
   });
-  
+
   const hintBtn = document.getElementById('hintBtn');
   hintBtn.addEventListener('click', getHint);
   hintBtn.addEventListener('touchend', (e) => {
     e.preventDefault();
     getHint();
   });
-  
+
   const newGameBtn = document.getElementById('newGameBtn');
   newGameBtn.addEventListener('click', () => {
-    if (!adPlaying) {
-      initializeGame(gridSize);
-    }
+    if (!adPlaying) initializeGame(gridSize);
   });
   newGameBtn.addEventListener('touchend', (e) => {
     e.preventDefault();
-    if (!adPlaying) {
-      initializeGame(gridSize);
-    }
+    if (!adPlaying) initializeGame(gridSize);
   });
-  
+
   const resetBtn = document.getElementById('resetBtn');
   resetBtn.addEventListener('click', () => {
-    if (!adPlaying) {
-      resetGame();
-    }
+    if (!adPlaying) resetGame();
   });
   resetBtn.addEventListener('touchend', (e) => {
     e.preventDefault();
-    if (!adPlaying) {
-      resetGame();
-    }
+    if (!adPlaying) resetGame();
   });
 
-  // Handle window resize
   window.addEventListener('resize', handleResize);
-  
-  // Enhanced touch handling for canvas only
+
   const canvasContainer = document.getElementById('canvasContainer');
-  
-  // Prevent double-tap zoom on the canvas container
   canvasContainer.style.touchAction = 'none';
-  
   canvasContainer.addEventListener('touchstart', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
-      // Don't prevent default on touchstart
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         touchStartX = touch.clientX;
@@ -186,100 +122,191 @@ function setupEventListeners() {
       }
     }
   }, { passive: true });
-  
+
   canvasContainer.addEventListener('touchmove', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
       e.preventDefault();
     }
   }, { passive: false });
-  
+
   canvasContainer.addEventListener('touchend', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying && isTouching) {
       e.preventDefault();
       const touch = e.changedTouches[0];
       const deltaX = Math.abs(touch.clientX - touchStartX);
       const deltaY = Math.abs(touch.clientY - touchStartY);
-      // Only trigger if it's a tap (not a swipe)
       if (deltaX < 15 && deltaY < 15) {
         handleCanvasClick(touch.clientX, touch.clientY);
       }
       isTouching = false;
     }
   }, { passive: false });
-  
-  // Prevent scrolling on the body but allow button interactions
+
   document.addEventListener('touchmove', function(e) {
-    // Only prevent scrolling on the canvas container
+    // Don't prevent default for dropdown elements
+    if (e.target.closest('.custom-dropdown') || e.target.closest('.dropdown-option')) {
+      return;
+    }
     if (e.target.closest('#canvasContainer')) {
       e.preventDefault();
     }
   }, { passive: false });
-  
-  // Prevent context menu on long press for canvas only
+
   canvasContainer.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
-  
-  // Add click handler for desktop mouse clicks
+
   canvasContainer.addEventListener('click', function(e) {
-    if (currentScreen === 'game' && !gameWon && !adPlaying) {
+    if (e.pointerType === 'mouse' && currentScreen === 'game' && !gameWon && !adPlaying) {
       handleCanvasClick(e.clientX, e.clientY);
     }
   });
+
+  // Set up the custom dropdown
+  const customDropdown = document.getElementById('customDropdown');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  const dropdownOptions = document.querySelectorAll('.dropdown-option');
+  const selectedValueDisplay = document.getElementById('selectedValue');
+  const gridSizeInput = document.getElementById('gridSizeSelect');
+  
+  // Initialize with default selection
+  let selectedSize = 4;
+  updateDropdownSelection(selectedSize);
+  
+  // Handle clicking on the dropdown display
+  customDropdown.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleDropdown();
+  });
+  
+  // Handle clicking on individual options
+  dropdownOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const value = parseInt(option.dataset.value);
+      selectDropdownOption(value);
+    });
+  });
+  
+  // Handle touch events for mobile
+  customDropdown.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleDropdown();
+  }, { passive: false });
+  
+  dropdownOptions.forEach(option => {
+    option.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const value = parseInt(option.dataset.value);
+      selectDropdownOption(value);
+    }, { passive: false });
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!customDropdown.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+  
+  // Close dropdown when touching outside
+  document.addEventListener('touchstart', (e) => {
+    if (!customDropdown.contains(e.target)) {
+      closeDropdown();
+    }
+  }, { passive: true });
+  
+  // Handle keyboard navigation
+  customDropdown.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleDropdown();
+    } else if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+  
+  function toggleDropdown() {
+    const isOpen = customDropdown.classList.contains('open');
+    if (isOpen) {
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
+  }
+  
+  function openDropdown() {
+    customDropdown.classList.add('open');
+    customDropdown.setAttribute('aria-expanded', 'true');
+  }
+  
+  function closeDropdown() {
+    customDropdown.classList.remove('open');
+    customDropdown.setAttribute('aria-expanded', 'false');
+  }
+  
+  function selectDropdownOption(value) {
+    selectedSize = value;
+    gridSize = value;
+    gridSizeInput.value = value;
+    updateDropdownSelection(value);
+    closeDropdown();
+    console.log('Grid size changed to', value); // Debug
+  }
+  
+  function updateDropdownSelection(value) {
+    // Update the display text
+    selectedValueDisplay.textContent = `${value} x ${value}`;
+    
+    // Update the selected option styling and accessibility
+    dropdownOptions.forEach(option => {
+      option.classList.remove('selected');
+      option.setAttribute('aria-selected', 'false');
+      if (parseInt(option.dataset.value) === value) {
+        option.classList.add('selected');
+        option.setAttribute('aria-selected', 'true');
+      }
+    });
+  }
 }
 
 function handleCanvasClick(clientX, clientY) {
   if (currentScreen !== 'game' || gameWon) return;
-  
-  // Get canvas position relative to viewport
   const canvasRect = canvas.elt.getBoundingClientRect();
   const canvasX = clientX - canvasRect.left;
   const canvasY = clientY - canvasRect.top;
-  
-  // Convert to canvas coordinates
   const x = (canvasX / canvasRect.width) * canvasWidth;
   const y = (canvasY / canvasRect.height) * canvasHeight;
-  
-  // Handle the click
   handleGridClick(x, y);
 }
 
 function handleGridClick(x, y) {
-  // Use the same positioning calculations as drawGameScreen
   const targetGridWidth = gridSize * targetCellSize;
   const targetGridHeight = gridSize * targetCellSize;
   const mainGridWidth = gridSize * cellSize;
   const mainGridHeight = gridSize * cellSize;
-  
-  // Calculate grid positions exactly like drawGameScreen
   const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  const targetOffsetY = 40; // Updated to match drawGameScreen
-  
+  const targetOffsetY = 40;
   const mainGridX = (canvasWidth - mainGridWidth) / 2;
-  const mainGridY = targetOffsetY + targetGridHeight + 50; // Updated to match drawGameScreen (50 instead of 25)
-  
-  // Check if click is in main grid (play area)
+  const mainGridY = targetOffsetY + targetGridHeight + 50;
   if (x >= mainGridX && x <= mainGridX + mainGridWidth &&
       y >= mainGridY && y <= mainGridY + mainGridHeight) {
-    
     const i = Math.floor((y - mainGridY) / cellSize);
     const j = Math.floor((x - mainGridX) / cellSize);
-    
     if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
-      // Check if this is the hinted tile
       if (hintRequested && hintCell && hintCell[0] === i && hintCell[1] === j) {
-        // Player clicked the hinted tile, remove the hint
         hintRequested = false;
         hintCell = null;
       }
-      
-      // Toggle the clicked cell and its adjacent cells
       toggleCell(grid, i, j, gridSize);
       toggleCell(grid, i-1, j, gridSize);
       toggleCell(grid, i+1, j, gridSize);
       toggleCell(grid, i, j-1, gridSize);
       toggleCell(grid, i, j+1, gridSize);
-      
       computeSolution();
       if (checkWin()) {
         gameWon = true;
@@ -290,52 +317,38 @@ function handleGridClick(x, y) {
 }
 
 function handleResize() {
-  // Update canvas size on window resize
   updateCanvasSize();
   resizeCanvas(canvasWidth, canvasHeight);
-  
-  // Recalculate cell sizes for responsive design
-  if (currentScreen === 'game') {
-    calculateCellSizes();
-  }
+  if (currentScreen === 'game') calculateCellSizes();
 }
 
 function calculateCellSizes() {
-  // Calculate responsive cell sizes based on canvas and grid size
-  // Use more space for grids - increased from 80% to 90% of canvas height
-  const availableHeight = canvasHeight * 0.9; // 90% of canvas height for grids
-  const availableWidth = canvasWidth * 0.98; // 98% of canvas width
-  
-  // Calculate space needed for two grids with labels
-  const gridSpacing = 25; // Reduced spacing between grids from 40 to 25
-  const labelHeight = 20; // Reduced label height from 25 to 20
+  const availableHeight = canvasHeight * 0.9;
+  const availableWidth = canvasWidth * 0.98;
+  const gridSpacing = 25;
+  const labelHeight = 20;
   const totalGridHeight = availableHeight - gridSpacing - (labelHeight * 2);
-  
-  // Allocate more space to play area grid (70%) and less to target grid (30%)
-  const targetGridHeight = totalGridHeight * 0.3; // 30% for target pattern
-  const playGridHeight = totalGridHeight * 0.7; // 70% for play area
+  const targetGridHeight = totalGridHeight * 0.3;
+  const playGridHeight = totalGridHeight * 0.7;
   const maxGridWidth = availableWidth;
-  
-  // Calculate cell sizes for each grid separately
   const maxTargetCellSizeByWidth = maxGridWidth / gridSize;
   const maxTargetCellSizeByHeight = targetGridHeight / gridSize;
   targetCellSize = Math.min(maxTargetCellSizeByWidth, maxTargetCellSizeByHeight);
-  
   const maxPlayCellSizeByWidth = maxGridWidth / gridSize;
   const maxPlayCellSizeByHeight = playGridHeight / gridSize;
   cellSize = Math.min(maxPlayCellSizeByWidth, maxPlayCellSizeByHeight);
-  
-  // Ensure minimum cell sizes for playability - increased minimums for better visibility
-  const minCellSize = Math.max(25, Math.min(40, window.innerWidth / 15)); // Increased minimum size
+  const minCellSize = Math.max(25, Math.min(40, window.innerWidth / 15));
   cellSize = Math.max(cellSize, minCellSize);
-  targetCellSize = Math.max(targetCellSize, minCellSize * 0.6); // Reduced target cell size minimum
-  
-  // Keep target cells significantly smaller than main cells
-  targetCellSize = Math.min(targetCellSize, cellSize * 0.7); // Reduced from 0.95 to 0.7
+  targetCellSize = Math.max(targetCellSize, minCellSize * 0.6);
+  targetCellSize = Math.min(targetCellSize, cellSize * 0.7);
 }
 
 function showTitleScreen() {
   currentScreen = 'title';
+  if (nextBtn) {
+    nextBtn.remove();
+    nextBtn = null;
+  }
   document.getElementById('titleScreen').classList.add('active');
   document.getElementById('gameScreen').classList.remove('active');
 }
@@ -354,13 +367,26 @@ function initializeGame(size) {
   targetPattern = createGrid(size, size);
   solutionMatrixA = computeAdjacencyMatrix(size);
   generateSolvablePattern(size);
-  grid = createGrid(size, size); // Start with empty grid
+  grid = createGrid(size, size);
   hintRequested = false;
   hintCell = null;
   solutionPath = [];
   computeSolution();
   gameWon = false;
   if (nextBtn) nextBtn.remove();
+  
+  // Reset free hints for new game
+  freeHintsRemaining = 3;
+  lastHintTime = 0;
+  
+  // Reset hint button state
+  const hintBtn = document.getElementById('hintBtn');
+  if (hintBtn) {
+    hintBtn.disabled = false;
+    hintBtn.style.opacity = '1';
+    hintBtn.style.cursor = 'pointer';
+    hintBtn.textContent = 'HINT';
+  }
 }
 
 function resetGame() {
@@ -383,16 +409,13 @@ function createGrid(rows, cols) {
 
 function generateSolvablePattern(size) {
   let n = size * size;
-  // Generate random solution vector x
-  let x = Array(n).fill(0).map(() => Math.floor(random(2))); // Random 0 or 1
-  // Compute b = A * x
+  let x = Array(n).fill(0).map(() => Math.floor(random(2)));
   let b = Array(n).fill(0);
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       b[i] = (b[i] + solutionMatrixA[i][j] * x[j]) % 2;
     }
   }
-  // Convert b to target pattern
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       targetPattern[i][j] = b[i * size + j];
@@ -412,11 +435,11 @@ function computeAdjacencyMatrix(size) {
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       let idx = i * size + j;
-      A[idx][idx] = 1; // Self
-      if (i > 0) A[(i-1)*size + j][idx] = 1; // Up
-      if (i < size-1) A[(i+1)*size + j][idx] = 1; // Down
-      if (j > 0) A[i*size + (j-1)][idx] = 1; // Left
-      if (j < size-1) A[i*size + (j+1)][idx] = 1; // Right
+      A[idx][idx] = 1;
+      if (i > 0) A[(i-1)*size + j][idx] = 1;
+      if (i < size-1) A[(i+1)*size + j][idx] = 1;
+      if (j > 0) A[i*size + (j-1)][idx] = 1;
+      if (j < size-1) A[i*size + (j+1)][idx] = 1;
     }
   }
   return A;
@@ -465,40 +488,102 @@ function computeSolution() {
 }
 
 function mousePressed() {
-  // Disable p5.js mousePressed to prevent conflicts with custom touch handlers
-  // All interaction is now handled by custom touch/click handlers
   return false;
 }
 
 function getHint() {
   if (currentScreen !== 'game' || gameWon || adPlaying) return;
   
-  // Start the ad
+  const currentTime = Date.now();
+  
+  // Check if we're still in cooldown period
+  if (currentTime - lastHintTime < hintCooldown) {
+    const remainingCooldown = Math.ceil((hintCooldown - (currentTime - lastHintTime)) / 1000);
+    console.log(`Hint cooldown: ${remainingCooldown} seconds remaining`);
+    return;
+  }
+  
+  // If we have free hints remaining, use one
+  if (freeHintsRemaining > 0) {
+    freeHintsRemaining--;
+    lastHintTime = currentTime;
+    console.log(`Free hint used! ${freeHintsRemaining} free hints remaining`);
+    
+    // Give the hint directly
+    hintRequested = true;
+    if (solutionPath.length === 0) {
+      computeSolution();
+    }
+    if (solutionPath.length > 0) {
+      hintCell = solutionPath.shift();
+    } else {
+      hintCell = null;
+    }
+    
+    // Start cooldown timer
+    startHintCooldown();
+    return;
+  }
+  
+  // No free hints left, show ad
   adPlaying = true;
   adStartTime = millis();
   adProgress = 0;
   
-  // Show the ad container
   const adContainer = document.getElementById('adContainer');
   adContainer.classList.remove('hidden');
   adContainer.classList.add('visible');
   
-  // Load AdSense ad
   try {
     (adsbygoogle = window.adsbygoogle || []).push({});
   } catch (e) {
     console.log('AdSense not loaded or configured');
   }
   
-  // Start the timer update
   updateAdTimer();
+}
+
+function startHintCooldown() {
+  const hintBtn = document.getElementById('hintBtn');
+  if (!hintBtn) return;
+  
+  // Disable the button
+  hintBtn.disabled = true;
+  hintBtn.style.opacity = '0.5';
+  hintBtn.style.cursor = 'not-allowed';
+  
+  // Start countdown
+  const cooldownInterval = setInterval(() => {
+    const currentTime = Date.now();
+    const remainingCooldown = Math.ceil((hintCooldown - (currentTime - lastHintTime)) / 1000);
+    
+    if (remainingCooldown <= 0) {
+      // Cooldown finished
+      clearInterval(cooldownInterval);
+      hintBtn.disabled = false;
+      hintBtn.style.opacity = '1';
+      hintBtn.style.cursor = 'pointer';
+      hintBtn.textContent = 'HINT';
+    } else {
+      // Update button text with countdown
+      hintBtn.textContent = `HINT (${remainingCooldown}s)`;
+    }
+  }, 1000);
 }
 
 function showNextButton() {
   nextBtn = createButton('NEXT LEVEL');
   nextBtn.id('nextBtn');
-  nextBtn.position(canvasWidth/2 - 75, canvasHeight/2);
-  nextBtn.mousePressed(() => initializeGame(gridSize));
+  nextBtn.position(canvasWidth/2 - 75, canvasHeight/2 + 50); // Adjusted Y-position
+  nextBtn.mousePressed(() => {
+    console.log('Next Level button pressed (mouse)');
+    initializeGame(gridSize);
+  });
+  nextBtn.elt.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    console.log('Next Level button touched');
+    initializeGame(gridSize);
+  });
 }
 
 function checkWin() {
@@ -515,13 +600,14 @@ function draw() {
     drawTitleScreen();
   } else if (currentScreen === 'game') {
     drawGameScreen();
+  } else {
+    // Don't draw anything if no screen is active
+    background(0);
   }
 }
 
 function drawTitleScreen() {
   background(0);
-  
-  // Draw animated background pattern
   for (let i = 0; i < 20; i++) {
     let x = (frameCount * 0.5 + i * 30) % canvasWidth;
     let y = (frameCount * 0.3 + i * 40) % canvasHeight;
@@ -532,57 +618,36 @@ function drawTitleScreen() {
 }
 
 function drawGameScreen() {
-  // Animate glow intensity
   glowIntensity += 0.1 * glowDirection;
-  if (glowIntensity > 1 || glowIntensity < 0) {
-    glowDirection *= -1;
-  }
-  
+  if (glowIntensity > 1 || glowIntensity < 0) glowDirection *= -1;
   background(0);
-  
-  // Calculate grid positions with proper centering
   const targetGridWidth = gridSize * targetCellSize;
   const targetGridHeight = gridSize * targetCellSize;
   const mainGridWidth = gridSize * cellSize;
   const mainGridHeight = gridSize * cellSize;
-  
-  // Draw target pattern (top grid) - positioned higher to use more space
   let targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  let targetOffsetY = 40; // Increased from 20 to 40 to add more top padding
-  
-  // Target pattern label
+  let targetOffsetY = 40;
   fill(0, 255, 255);
-  textSize(18); // Slightly larger text
-  text("TARGET PATTERN", canvasWidth/2, targetOffsetY - 20); // Increased from -10 to -20 for more top padding
-  
+  textSize(18);
+  text("TARGET PATTERN", canvasWidth/2, targetOffsetY - 20);
   drawGrid(targetPattern, targetOffsetX, targetOffsetY, targetCellSize, true);
-  
-  // Draw main grid (bottom grid) - positioned with increased spacing
   let offsetX = (canvasWidth - mainGridWidth) / 2;
-  let offsetY = targetOffsetY + targetGridHeight + 50; // Increased spacing from 25 to 50
-  
+  let offsetY = targetOffsetY + targetGridHeight + 50;
   drawGrid(grid, offsetX, offsetY, cellSize, false);
-  
-  // Draw hint glow on the play area grid
   if (hintRequested && hintCell && !gameWon) {
     let glowAlpha = 150 + 100 * sin(frameCount * 0.1);
     fill(255, 255, 0, glowAlpha);
     noStroke();
     rect(hintCell[1] * cellSize + offsetX - 5, hintCell[0] * cellSize + offsetY - 5, cellSize + 10, cellSize + 10, 10);
-    
-    // Add a pulsing border around the hinted tile
     let borderAlpha = 200 + 55 * sin(frameCount * 0.2);
     stroke(255, 255, 0, borderAlpha);
     strokeWeight(3);
     noFill();
     rect(hintCell[1] * cellSize + offsetX - 3, hintCell[0] * cellSize + offsetY - 3, cellSize + 6, cellSize + 6, 8);
   }
-
-  // Draw win overlay
   if (gameWon) {
     fill(0, 0, 0, 200);
     rect(0, 0, canvasWidth, canvasHeight);
-    
     fill(0, 255, 128);
     textSize(32);
     text("CONGRATULATIONS!", canvasWidth/2, canvasHeight/2 - 30);
@@ -595,29 +660,21 @@ function drawGrid(grid, offsetX, offsetY, cSize, isTarget) {
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       if (grid[i][j] === 1) {
-        // Neon glow effect for filled cells
         let glowColor = isTarget ? color(255, 100, 255) : color(0, 255, 255);
         let glowIntensity = 100 + 50 * sin(frameCount * 0.1 + i + j);
-        
-        // Outer glow
         fill(red(glowColor), green(glowColor), blue(glowColor), glowIntensity * 0.3);
         noStroke();
         rect(j * cSize + offsetX - 3, i * cSize + offsetY - 3, cSize + 6, cSize + 6, 8);
-        
-        // Inner glow
         fill(red(glowColor), green(glowColor), blue(glowColor), glowIntensity * 0.6);
         rect(j * cSize + offsetX - 1, i * cSize + offsetY - 1, cSize + 2, cSize + 2, 6);
-        
-        // Core cell
         fill(red(glowColor), green(glowColor), blue(glowColor), 255);
-        stroke(255, 255, 255, 200); // White gridlines with higher opacity
-        strokeWeight(2); // Increased gridline width
+        stroke(255, 255, 255, 200);
+        strokeWeight(2);
         rect(j * cSize + offsetX, i * cSize + offsetY, cSize, cSize, 5);
       } else {
-        // Empty cells with white gridlines
         fill(0, 0, 0, 100);
-        stroke(255, 255, 255, 200); // White gridlines with higher opacity
-        strokeWeight(2); // Increased gridline width
+        stroke(255, 255, 255, 200);
+        strokeWeight(2);
         rect(j * cSize + offsetX, i * cSize + offsetY, cSize, cSize, 5);
       }
     }
@@ -626,25 +683,18 @@ function drawGrid(grid, offsetX, offsetY, cSize, isTarget) {
 
 function updateAdTimer() {
   if (!adPlaying) return;
-  
   adProgress = millis() - adStartTime;
   const remainingTime = Math.ceil((adDuration - adProgress) / 1000);
   const progressPercent = (adProgress / adDuration) * 100;
-  
-  // Update timer elements
   const timerFill = document.getElementById('timerFill');
   const timerText = document.getElementById('timerText');
-  
   if (timerFill && timerText) {
     timerFill.style.width = progressPercent + '%';
     timerText.textContent = `Please wait: ${remainingTime} seconds`;
   }
-  
-  // Check if ad is complete
   if (adProgress >= adDuration) {
     completeAdAndGiveHint();
   } else {
-    // Continue updating timer
     requestAnimationFrame(updateAdTimer);
   }
 }
@@ -652,19 +702,22 @@ function updateAdTimer() {
 function completeAdAndGiveHint() {
   adPlaying = false;
   
-  // Hide the ad container
   const adContainer = document.getElementById('adContainer');
   adContainer.classList.remove('visible');
   adContainer.classList.add('hidden');
   
+  // Update last hint time for cooldown
+  lastHintTime = Date.now();
+  
   // Show hint indicator instead of automatically clicking
   hintRequested = true;
-  if (solutionPath.length === 0) {
-    computeSolution();
-  }
+  if (solutionPath.length === 0) computeSolution();
   if (solutionPath.length > 0) {
-    hintCell = solutionPath.shift(); // Get the next move but don't apply it
+    hintCell = solutionPath.shift();
   } else {
     hintCell = null;
   }
-} 
+  
+  // Start cooldown timer
+  startHintCooldown();
+}
