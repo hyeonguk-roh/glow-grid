@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glow Grid - Neon Puzzle Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- Title Screen -->
+  <div id="titleScreen" class="screen active">
+    <h1>GLOW GRID</h1>
+    <div class="title-content">
+      <div class="size-selector-container">
+        <label for="gridSizeSelect">Select Grid Size:</label>
+        <select id="gridSizeSelect" class="size-dropdown">
+          <option value="4">4 x 4</option>
+          <option value="5">5 x 5</option>
+          <option value="6">6 x 6</option>
+          <option value="7">7 x 7</option>
+          <option value="8">8 x 8</option>
+        </select>
+      </div>
+      <button class="play-btn" id="playBtn">START GAME</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameScreen" class="screen">
+    <button class="back-btn" id="backBtn">← BACK</button>
+    <div id="canvasContainer"></div>
+    <div class="game-controls">
+      <button class="game-btn" id="hintBtn">HINT</button>
+      <button class="game-btn" id="newGameBtn">NEW GAME</button>
+      <button class="game-btn" id="resetBtn">RESET</button>
+    </div>
+  </div>
+
+  <!-- AdSense Ad Container (Hidden by default) -->
+  <div id="adContainer" class="ad-container" style="display: none;">
+    <div class="ad-wrapper">
+      <div class="ad-label">ADVERTISEMENT</div>
+      <div id="adSenseAd" class="ad-content">
+        <!-- AdSense ad will be inserted here -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+             data-ad-slot="YOUR_AD_SLOT_ID"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
+      <div class="ad-timer">
+        <div class="timer-bar">
+          <div class="timer-fill" id="timerFill"></div>
+        </div>
+        <div class="timer-text" id="timerText">Please wait: 10 seconds</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
