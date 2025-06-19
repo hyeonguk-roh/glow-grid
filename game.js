@@ -27,6 +27,8 @@ let adProgress = 0;
 let touchStartX = 0;
 let touchStartY = 0;
 let isTouching = false;
+let lastTapTime = 0;
+let tapDebounceDelay = 300; // 300ms debounce to prevent rapid taps
 
 function setup() {
   // Create responsive canvas that fits in viewport
@@ -172,9 +174,13 @@ function setupEventListeners() {
   // Enhanced touch handling for canvas only
   const canvasContainer = document.getElementById('canvasContainer');
   
+  // Prevent double-tap zoom on the canvas container
+  canvasContainer.style.touchAction = 'none';
+  
   canvasContainer.addEventListener('touchstart', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
-      // Don't prevent default - let the touch complete
+      // Prevent default to stop double-tap zoom
+      e.preventDefault();
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         touchStartX = touch.clientX;
@@ -182,29 +188,35 @@ function setupEventListeners() {
         isTouching = true;
       }
     }
-  }, { passive: true });
+  }, { passive: false });
   
   canvasContainer.addEventListener('touchmove', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying) {
-      // Only prevent scrolling, not the touch
+      // Prevent scrolling
       e.preventDefault();
     }
   }, { passive: false });
   
   canvasContainer.addEventListener('touchend', function(e) {
     if (currentScreen === 'game' && !gameWon && !adPlaying && isTouching) {
-      // Don't prevent default - let the touch complete
+      // Prevent default to stop double-tap zoom
+      e.preventDefault();
       const touch = e.changedTouches[0];
       const deltaX = Math.abs(touch.clientX - touchStartX);
       const deltaY = Math.abs(touch.clientY - touchStartY);
       
-      // Only trigger if it's a tap (not a swipe)
+      // Only trigger if it's a tap (not a swipe) and reset touching state immediately
       if (deltaX < 10 && deltaY < 10) {
-        handleCanvasClick(touch.clientX, touch.clientY);
+        // Debounce rapid taps
+        const currentTime = Date.now();
+        if (currentTime - lastTapTime > tapDebounceDelay) {
+          handleCanvasClick(touch.clientX, touch.clientY);
+          lastTapTime = currentTime;
+        }
       }
       isTouching = false;
     }
-  }, { passive: true });
+  }, { passive: false });
   
   // Prevent scrolling on the body but allow button interactions
   document.addEventListener('touchmove', function(e) {

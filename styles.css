@@ -314,11 +314,18 @@ button:active {
   align-items: center;
   width: 100%;
   max-height: 75vh;
-  margin: 0;
+  margin: 0; /* Remove margin to anchor directly above game controls */
   overflow: hidden;
   min-height: 200px;
   /* Prevent touch scrolling */
   touch-action: none;
+  /* Prevent double-tap zoom */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   /* Center canvas properly */
   position: relative;
   /* Ensure canvas container doesn't interfere with button clicks */
