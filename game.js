@@ -245,10 +245,10 @@ function handleGridClick(x, y) {
   
   // Calculate grid positions exactly like drawGameScreen
   const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
-  const targetOffsetY = 20;
+  const targetOffsetY = 40; // Updated to match drawGameScreen
   
   const mainGridX = (canvasWidth - mainGridWidth) / 2;
-  const mainGridY = targetOffsetY + targetGridHeight + 25;
+  const mainGridY = targetOffsetY + targetGridHeight + 50; // Updated to match drawGameScreen (50 instead of 25)
   
   // Check if click is in main grid (play area)
   if (x >= mainGridX && x <= mainGridX + mainGridWidth &&
@@ -459,19 +459,22 @@ function computeSolution() {
 function mousePressed() {
   if (currentScreen !== 'game' || gameWon || adPlaying) return;
   
-  // Use the new responsive grid positioning
-  const gridSpacing = 40;
-  const labelHeight = 25;
-  const gridWidth = cellSize * gridSize;
-  const gridHeight = cellSize * gridSize;
+  // Use the same positioning calculations as drawGameScreen and handleGridClick
+  const targetGridWidth = gridSize * targetCellSize;
+  const targetGridHeight = gridSize * targetCellSize;
+  const mainGridWidth = gridSize * cellSize;
+  const mainGridHeight = gridSize * cellSize;
   
-  // Main grid position
-  const mainGridX = (canvasWidth - gridWidth) / 2;
-  const mainGridY = labelHeight + 10;
+  // Calculate grid positions exactly like drawGameScreen and handleGridClick
+  const targetOffsetX = (canvasWidth - targetGridWidth) / 2;
+  const targetOffsetY = 40; // Updated to match drawGameScreen
+  
+  const mainGridX = (canvasWidth - mainGridWidth) / 2;
+  const mainGridY = targetOffsetY + targetGridHeight + 50; // Updated to match drawGameScreen (50 instead of 25)
   
   // Check if click is in main grid
-  if (mouseX >= mainGridX && mouseX <= mainGridX + gridWidth &&
-      mouseY >= mainGridY && mouseY <= mainGridY + gridHeight) {
+  if (mouseX >= mainGridX && mouseX <= mainGridX + mainGridWidth &&
+      mouseY >= mainGridY && mouseY <= mainGridY + mainGridHeight) {
     
     const i = Math.floor((mouseY - mainGridY) / cellSize);
     const j = Math.floor((mouseX - mainGridX) / cellSize);

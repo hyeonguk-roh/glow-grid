@@ -275,10 +275,10 @@ button:active {
 /* Game Screen Styles */
 #gameScreen {
   position: relative;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: clamp(1vh, 2vw, 2vh) clamp(1vw, 2vw, 2vw);
   height: 100vh;
-  gap: 1vh;
+  gap: 0;
   /* Safe area handling */
   padding-top: max(clamp(1vh, 2vw, 2vh), env(safe-area-inset-top));
   padding-bottom: max(clamp(1vh, 2vw, 2vh), env(safe-area-inset-bottom));
@@ -314,7 +314,7 @@ button:active {
   align-items: center;
   width: 100%;
   max-height: 75vh;
-  margin: clamp(0.5vh, 1vw, 1vh) 0;
+  margin: 0;
   overflow: hidden;
   min-height: 200px;
   /* Prevent touch scrolling */
@@ -336,10 +336,13 @@ button:active {
   background: rgba(0, 255, 255, 0.1);
   border-radius: 15px;
   border: 1px solid rgba(0, 255, 255, 0.3);
-  margin-top: clamp(0.5vh, 1vw, 1vh);
+  margin-top: 0;
   flex-wrap: wrap;
   /* Safe area handling for bottom controls */
   margin-bottom: max(clamp(0.5vh, 1vw, 1vh), env(safe-area-inset-bottom));
+  /* Position directly under the canvas container */
+  position: relative;
+  top: 0;
 }
 
 .game-btn {
